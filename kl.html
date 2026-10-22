@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#111">
+<title>تواصل</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0b0b0b; color: #eee;
+    overflow: hidden;
+  }
+  button, input {
+    font-family: inherit; font-size: 15px;
+  }
+  button {
+    padding: 10px 16px; border-radius: 10px; border: 0;
+    background: #4f7cff; color: #fff; cursor: pointer;
+  }
+  button:hover { background: #3d68e0; }
+  button:disabled { background: #333; cursor: not-allowed; }
+  button.danger { background: #d64545; }
+  button.danger:hover { background: #b93a3a; }
+  button.ghost { background: transparent; border: 1px solid #333; }
+  button.ghost:hover { background: #1c1c1c; }
+  input {
+    padding: 11px; border-radius: 10px;
+    border: 1px solid #2a2a2a; background: #151515; color: #fff;
+    width: 100%;
+  }
+  input:focus { outline: none; border-color: #4f7cff; }
+  .muted { color: #888; font-size: 13px; }
+  .err { color: #ff6b6b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+
+  /* ---------- Screens ---------- */
+  .screen { display: none; height: 100%; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ---------- Login ---------- */
+  #loginScreen { align-items: center; justify-content: center; padding: 20px; }
+  .auth-card {
+    background: #161616; padding: 28px; border-radius: 16px;
+    width: 100%; max-width: 360px;
+    border: 1px solid #222;
+  }
+  .auth-card h2 { margin: 0 0 6px; font-size: 22px; }
+  .auth-card .sub { color: #888; font-size: 13px; margin-bottom: 18px; }
+  .auth-card input { margin: 6px 0; }
+  .auth-card button { width: 100%; margin-top: 12px; padding: 12px; }
+  .switch-line { text-align: center; margin-top: 14px; font-size: 13px; color: #888; }
+  .switch-line a { color: #7aa2ff; cursor: pointer; }
+
+  /* ---------- App shell ---------- */
+  #appScreen { flex-direction: row; }
+  .sidebar {
+    width: 340px; min-width: 260px; background: #131313;
+    border-left: 1px solid #222;
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+  .sidebar-header {
+    padding: 14px 16px; border-bottom: 1px solid #222;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .sidebar-header .me { font-weight: 600; }
+  .sidebar-tabs {
+    display: flex; border-bottom: 1px solid #222;
+  }
+  .sidebar-tabs button {
+    flex: 1; background: transparent; border-radius: 0;
+    padding: 12px; color: #888; font-weight: 500;
+    border-bottom: 2px solid transparent;
+  }
+  .sidebar-tabs button.active {
+    color: #fff; border-bottom-color: #4f7cff;
+  }
+  .sidebar-tabs button:hover { background: #1a1a1a; }
+  .sidebar-body {
+    flex: 1; overflow-y: auto;
+  }
+  .search-box { padding: 10px 12px; border-bottom: 1px solid #222; }
+  .list-item {
+    padding: 12px 16px; border-bottom: 1px solid #1a1a1a;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; gap: 8px;
+  }
+  .list-item:hover { background: #1a1a1a; }
+  .list-item .title { font-weight: 500; }
+  .list-item .sub { color: #888; font-size: 12px; margin-top: 2px; }
+  .list-item .actions { display: flex; gap: 6px; }
+  .list-item .actions button { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+  .empty { padding: 24px; text-align: center; color: #666; font-size: 13px; }
+
+  /* ---------- Chat panel ---------- */
+  .main-panel {
+    flex: 1; display: flex; flex-direction: column;
+    height: 100%; min-width: 0;
+  }
+  .chat-header {
+    padding: 14px 20px; border-bottom: 1px solid #222;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #131313;
+  }
+  .chat-header .who { font-weight: 600; }
+  .chat-header .actions { display: flex; gap: 8px; }
+  .chat-header .actions button { padding: 8px 12px; font-size: 13px; }
+  .messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: #0e0e0e;
+  }
+  .msg {
+    max-width: 70%; padding: 9px 13px; border-radius: 14px;
+    font-size: 14px; line-height: 1.4; word-wrap: break-word;
+  }
+  .msg.me {
+    align-self: flex-start; background: #4f7cff; color: #fff;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.them {
+    align-self: flex-end; background: #222; color: #eee;
+    border-bottom-right-radius: 4px;
+  }
+  .msg .meta { font-size: 10px; opacity: .65; margin-top: 3px; }
+  .composer {
+    padding: 12px 16px; border-top: 1px solid #222;
+    display: flex; gap: 8px; background: #131313;
+  }
+  .composer input { flex: 1; }
+  .composer button { padding: 10px 18px; }
+  .welcome {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #555; gap: 8px; padding: 20px; text-align: center;
+  }
+  .welcome h2 { color: #888; margin: 0; font-size: 20px; }
+
+  /* ---------- Room (call) ---------- */
+  #roomScreen {
+    background: #000; position: relative;
+  }
+  .room-header {
+    padding: 14px 20px; display: flex;
+    justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,.6); z-index: 5;
+  }
+  .room-header .name { font-weight: 600; }
+  .room-body {
+    flex: 1; overflow-y: auto; padding: 12px;
+  }
+  #videos {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .tile {
+    position: relative; width: calc(50% - 5px);
+    max-width: 480px;
+  }
+  .tile video {
+    width: 100%; background: #000; border-radius: 12px;
+    display: block; aspect-ratio: 4/3; object-fit: cover;
+  }
+  .tile .cap {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,.7); padding: 2px 8px;
+    border-radius: 6px; font-size: 12px;
+  }
+  .room-controls {
+    padding: 14px; display: flex; gap: 10px; justify-content: center;
+    background: rgba(0,0,0,.6);
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 720px) {
+    #appScreen { flex-direction: column; }
+    .sidebar {
+      width: 100%; height: 100%;
+    }
+    .main-panel { display: none; }
+    #appScreen.chat-open .sidebar { display: none; }
+    #appScreen.chat-open .main-panel { display: flex; }
+    .msg { max-width: 85%; }
+    .tile { width: 100%; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen" class="screen active">
+  <div class="auth-card">
+    <h2 id="authTitle">تسجيل الدخول</h2>
+    <div class="sub" id="authSub">اسم المستخدم فقط — بدون رقم هاتف</div>
+    <input id="authUser" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="none">
+    <input id="authPass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <button id="authBtn" onclick="doAuth()">دخول</button>
+    <div class="err" id="authErr"></div>
+    <div class="switch-line">
+      <span id="authSwitchLabel">ليس لديك حساب؟</span>
+      <a id="authSwitchLink" onclick="switchAuthMode()">سجّل الآن</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appScreen" class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="me" id="meName">—</div>
+      <button class="ghost" onclick="doLogout()" style="padding:6px 10px;font-size:12px">خروج</button>
+    </div>
+    <div class="sidebar-tabs">
+      <button id="tabChats" class="active" onclick="switchTab('chats')">الدردشات</button>
+      <button id="tabFriends" onclick="switchTab('friends')">الأصدقاء</button>
+      <button id="tabRooms" onclick="switchTab('rooms')">الغرف</button>
+    </div>
+    <div class="sidebar-body" id="sidebarBody"></div>
+  </div>
+
+  <div class="main-panel">
+    <div id="chatArea" style="display:flex;flex-direction:column;height:100%">
+      <div class="welcome" id="chatWelcome">
+        <h2>اختر محادثة</h2>
+        <div class="muted">أو ابحث عن صديق من قائمة الأصدقاء</div>
+      </div>
+      <div id="chatView" style="display:none;flex-direction:column;height:100%">
+        <div class="chat-header">
+          <div class="who" id="chatWho">—</div>
+          <div class="actions">
+            <button class="ghost" onclick="startCallWithCurrent()" id="callBtn">مكالمة</button>
+          </div>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="composer">
+          <input id="msgInput" placeholder="اكتب رسالة..." onkeydown="if(event.key==='Enter')sendMsg()">
+          <button onclick="sendMsg()">إرسال</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ROOM ============ -->
+<div id="roomScreen" class="screen">
+  <div class="room-header">
+    <div class="name" id="roomTitle">غرفة</div>
+    <button class="danger" onclick="leaveRoom()" style="padding:8px 12px;font-size:13px">إنهاء</button>
+  </div>
+  <div class="room-body">
+    <div id="videos"></div>
+  </div>
+  <div class="room-controls">
+    <button id="roomStartBtn" onclick="startLocalMedia()">ابدأ الكاميرا/المايك</button>
+    <button class="ghost" onclick="rotateCurrentRoom()" id="rotateBtn" style="display:none">تجديد الرابط</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STORAGE
+   ============================================================ */
+const DB = {
+  read(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } },
+  write(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+function users() { return DB.read('users', []); }
+function saveUsers(v) { DB.write('users', v); }
+function friendships() { return DB.read('friendships', []); }
+function saveFriendships(v) { DB.write('friendships', v); }
+function rooms() { return DB.read('rooms', []); }
+function saveRooms(v) { DB.write('rooms', v); }
+function messages() { return DB.read('messages', []); }
+function saveMessages(v) { DB.write('messages', v); }
+function session() { return DB.read('session', null); }
+function setSession(s) { DB.write('session', s); }
+function clearSession() { localStorage.removeItem('session'); }
+
+async function sha256(t) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+let authMode = 'login';
+
+function switchAuthMode() {
+  authMode = authMode === 'login' ? 'register' : 'login';
+  $('authTitle').textContent = authMode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب';
+  $('authSub').textContent = authMode === 'login' ? 'اسم المستخدم فقط — بدون رقم هاتف' : 'اختر اسم مستخدم وكلمة مرور';
+  $('authBtn').textContent = authMode === 'login' ? 'دخول' : 'تسجيل';
+  $('authSwitchLabel').textContent = authMode === 'login' ? 'ليس لديك حساب؟' : 'لديك حساب؟';
+  $('authSwitchLink').textContent = authMode === 'login' ? 'سجّل الآن' : 'دخول';
+  $('authErr').textContent = '';
+}
+
+async function doAuth() {
+  const u = $('authUser').value.trim();
+  const p = $('authPass').value;
+  const err = $('authErr');
+  err.textContent = '';
+  if (!u || !p) { err.textContent = 'املأ كل الحقول'; return; }
+  if (u.length < 3) { err.textContent = 'اسم المستخدم 3 أحرف على الأقل'; return; }
+  if (p.length < 6) { err.textContent = 'كلمة المرور 6 أحرف على الأقل'; return; }
+
+  const all = users();
+  const hash = await sha256(p);
+
+  if (authMode === 'register') {
+    if (all.some(x => x.username === u)) { err.textContent = 'اسم المستخدم مأخوذ'; return; }
+    const user = { id: uid(), username: u, pwHash: hash, createdAt: Date.now() };
+    all.push(user); saveUsers(all);
+    setSession({ id: user.id, username: user.username });
+    enterApp();
+  } else {
+    const user = all.find(x => x.username === u);
+    if (!user || user.pwHash !== hash) { err.textContent = 'بيانات غير صحيحة'; return; }
+    setSession({ id: user.id, username: user.username });
+    enterApp();
+  }
+}
+
+function doLogout() {
+  clearSession();
+  if (bc) { bc.close(); bc = null; }
+  $('appScreen').classList.remove('active', 'chat-open');
+  $('roomScreen').classList.remove('active');
+  $('loginScreen').classList.add('active');
+  $('authUser').value = ''; $('authPass').value = '';
+}
+
+function enterApp() {
+  $('loginScreen').classList.remove('active');
+  $('appScreen').classList.add('active');
+  $('meName').textContent = session().username;
+  switchTab('chats');
+  setupBroadcast();
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+let currentTab = 'chats';
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['chats', 'friends', 'rooms'].forEach(t => {
+    $('tab' + t[0].toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+  });
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const me = session();
+  if (!me) return;
+  const body = $('sidebarBody');
+
+  if (currentTab === 'chats') {
+    const fs = friendships().filter(f =>
+      f.status === 'accepted' && (f.from === me.id || f.to === me.id)
+    );
+    const userMap = Object.fromEntries(users().map(u => [u.id, u]));
+    const msgs = messages();
+
+    const conversations = fs.map(f => {
+      const otherId = f.from === me.id ? f.to : f.from;
+      const other = userMap[otherId];
+      if (!other) return null;
+      const convo = msgs.filter(m =>
+        (m.from === me.id && m.to === otherId) || (m.from === otherId && m.to === me.id)
+      );
+      const last = convo[convo.length - 1];
+      return { other, last };
+    }).filter(Boolean).sort((a, b) => (b.last?.at || 0) - (a.last?.at || 0));
+
+    body.innerHTML = conversations.length
+      ? conversations.map(c => `
+        <div class="list-item" onclick="openChat('${c.other.id}')">
+          <div>
+            <div class="title">${esc(c.other.username)}</div>
+            <div class="sub">${c.last ? esc(c.last.text.slice(0, 40)) : 'لا رسائل بعد'}</div>
+          </div>
+        </div>`).join('')
+      : '<div class="empty">لا توجد محادثات — أضف صديقاً أولاً</div>';
+  }
+
+  if (currentTab === 'friends') {
+    const all = users();
+    const fs = friendships();
+    const incoming = fs.filter(f => f.to === me.id && f.status === 'pending');
+    const outgoing = fs.filter(f => f.from === me.id && f.status === 'pending');
+    const accepted = fs.filter(f => f.status === 'accepted' && (f.from === me.id || f.to === me.id));
+    const userMap = Object.fromEntries(all.map(u => [u.id, u]));
+
+    body.innerHTML = `
+      <div class="search-box">
+        <input id="friendSearch" placeholder="ابحث باسم المستخدم..." oninput="renderFriendSearch()">
+        <div id="friendSearchResults" style="margin-top:8px"></div>
+      </div>
+      ${incoming.length ? `<div style="padding:8px 16px;color:#888;font-size:12px">طلبات واردة</div>` : ''}
+      ${incoming.map(f => {
+        const u = userMap[f.from];
+        if (!u) return '';
+        return `<div class="list-item">
+          <div><div class="title">${esc(u.username)}</div></div>
+          <div class="actions">
+            <button onclick="acceptFriend('${f.id}')">قبول</button>
+            <button class="ghost" onclick="rejectFriend('${f.id}')">رفض</button>
+          </div>
+        </div>`;
+      }).join('')}
+      ${outgoing.length ? `<div style="padding:8px 16px;color:#888;font-size:12px">طلبات مرسلة</div>` : ''}
+      ${outgoing.map(f => {
+        const u = userMap[f.to];
+        if (!u) return '';
+        return `<div class="list-item">
+          <div><div class="title">${esc(u.username)}</div><div class="sub">بانتظار القبول</div></div>
+        </div>`;
+      }).join('')}
+      ${accepted.length ? `<div style="padding:8px 16px;color:#888;font-size:12px">أصدقاء</div>` : ''}
+      ${accepted.map(f => {
+        const otherId = f.from === me.id ? f.to : f.from;
+        const u = userMap[otherId];
+        if (!u) return '';
+        return `<div class="list-item" onclick="openChat('${u.id}')">
+          <div><div class="title">${esc(u.username)}</div></div>
+        </div>`;
+      }).join('')}
+    `;
+  }
+
+  if (currentTab === 'rooms') {
+    const myRooms = rooms().filter(r => r.hostId === me.id);
+    body.innerHTML = `
+      <div class="search-box">
+        <button onclick="createRoom()" style="width:100%">+ غرفة خاصة جديدة</button>
+      </div>
+      ${myRooms.length ? myRooms.map(r => `
+        <div class="list-item">
+          <div>
+            <div class="title">${esc(r.name)}</div>
+            <div class="sub">${r.members?.length || 0} مشارك</div>
+          </div>
+          <div class="actions">
+            <button onclick="openRoom('${r.id}')">دخول</button>
+            <button class="ghost" onclick="copyRoomLink('${r.id}')">نسخ</button>
+            <button class="ghost" onclick="rotateRoom('${r.id}')">تجديد</button>
+          </div>
+        </div>`).join('') : '<div class="empty">لا توجد غرف — أنشئ واحدة</div>'}
+    `;
+  }
+}
+
+function renderFriendSearch() {
+  const q = $('friendSearch').value.trim();
+  const me = session();
+  const res = $('friendSearchResults');
+  if (!q) { res.innerHTML = ''; return; }
+  const all = users();
+  const fs = friendships();
+  const matches = all.filter(u =>
+    u.id !== me.id && u.username.startsWith(q)
+  ).slice(0, 10);
+
+  if (!matches.length) { res.innerHTML = '<div class="muted" style="padding:8px">لا نتائج</div>'; return; }
+
+  res.innerHTML = matches.map(u => {
+    const rel = fs.find(f =>
+      (f.from === me.id && f.to === u.id) || (f.from === u.id && f.to === me.id)
+    );
+    let action = `<button onclick="sendFriendReq('${u.id}')">إضافة</button>`;
+    if (rel) action = `<span class="muted">${rel.status === 'accepted' ? 'صديق' : 'طلب مرسل'}</span>`;
+    return `<div class="list-item" style="padding:8px 0">
+      <div class="title">${esc(u.username)}</div>
+      <div class="actions">${action}</div>
+    </div>`;
+  }).join('');
+}
+
+function sendFriendReq(toId) {
+  const me = session();
+  const fs = friendships();
+  fs.push({ id: uid(), from: me.id, to: toId, status: 'pending', at: Date.now() });
+  saveFriendships(fs);
+  renderSidebar();
+  renderFriendSearch();
+}
+
+function acceptFriend(fid) {
+  const fs = friendships();
+  const f = fs.find(x => x.id === fid);
+  if (f) { f.status = 'accepted'; saveFriendships(fs); }
+  renderSidebar();
+}
+
+function rejectFriend(fid) {
+  const fs = friendships().filter(x => x.id !== fid);
+  saveFriendships(fs);
+  renderSidebar();
+}
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+let activeChatId = null;
+
+function openChat(otherId) {
+  activeChatId = otherId;
+  const me = session();
+  const other = users().find(u => u.id === otherId);
+  if (!other) return;
+
+  $('chatWelcome').style.display = 'none';
+  $('chatView').style.display = 'flex';
+  $('chatWho').textContent = other.username;
+  $('appScreen').classList.add('chat-open');
+
+  renderMessages();
+  $('msgInput').focus();
+}
+
+function renderMessages() {
+  const me = session();
+  const msgs = messages()
+    .filter(m => m.chatKey === chatKey(me.id, activeChatId))
+    .sort((a, b) => a.at - b.at);
+
+  const el = $('messages');
+  el.innerHTML = msgs.map(m => {
+    const mine = m.from === me.id;
+    const time = new Date(m.at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="msg ${mine ? 'me' : 'them'}">
+      ${esc(m.text)}
+      <div class="meta">${time}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function chatKey(a, b) {
+  return [a, b].sort().join('|');
+}
+
+function sendMsg() {
+  const me = session();
+  const input = $('msgInput');
+  const text = input.value.trim();
+  if (!text || !activeChatId) return;
+
+  const all = messages();
+  all.push({
+    id: uid(),
+    chatKey: chatKey(me.id, activeChatId),
+    from: me.id,
+    to: activeChatId,
+    text,
+    at: Date.now()
+  });
+  saveMessages(all);
+  input.value = '';
+  renderMessages();
+
+  if (bc) bc.postMessage({ type: 'msg', chatKey: chatKey(me.id, activeChatId) });
+}
+
+/* ============================================================
+   ROOMS
+   ============================================================ */
+function createRoom() {
+  const me = session();
+  const name = prompt('اسم الغرفة:', 'غرفة') || 'غرفة';
+  const id = uid();
+  const token = uid() + uid();
+  const all = rooms();
+  all.push({ id, hostId: me.id, name, inviteToken: token, members: [me.id], at: Date.now() });
+  saveRooms(all);
+  renderSidebar();
+  copyRoomLink(id);
+}
+
+function copyRoomLink(roomId) {
+  const r = rooms().find(x => x.id === roomId);
+  if (!r) return;
+  const link = location.origin + location.pathname + '#room=' + r.id + '&t=' + r.inviteToken;
+  navigator.clipboard.writeText(link).then(
+    () => alert('تم نسخ الرابط:\n' + link),
+    () => prompt('انسخ الرابط:', link)
+  );
+}
+
+function rotateRoom(roomId) {
+  const all = rooms();
+  const r = all.find(x => x.id === roomId);
+  if (!r) return;
+  r.inviteToken = uid() + uid();
+  saveRooms(all);
+  renderSidebar();
+  copyRoomLink(roomId);
+}
+
+function openRoom(roomId, token) {
+  const me = session();
+  const all = rooms();
+  const r = all.find(x => x.id === roomId);
+  if (!r) { alert('الغرفة غير موجودة'); return; }
+  const isHost = r.hostId === me.id;
+  if (!isHost && token && token !== r.inviteToken) { alert('رابط غير صالح'); return; }
+  if (!r.members.includes(me.id)) {
+    r.members.push(me.id);
+    saveRooms(all);
+  }
+
+  $('appScreen').classList.remove('active', 'chat-open');
+  $('roomScreen').classList.add('active');
+  $('roomTitle').textContent = r.name;
+  $('rotateBtn').style.display = isHost ? 'inline-block' : 'none';
+  $('videos').innerHTML = '';
+
+  currentRoomId = roomId;
+  startBroadcastForRoom(roomId);
+}
+
+function rotateCurrentRoom() {
+  if (!currentRoomId) return;
+  rotateRoom(currentRoomId);
+}
+
+/* ============================================================
+   BROADCAST (fake network: same-browser tabs only)
+   ============================================================ */
+let bc = null;
+let currentRoomId = null;
+
+function setupBroadcast() {
+  if (bc) bc.close();
+  bc = new BroadcastChannel('app-bus');
+  bc.onmessage = e => {
+    const msg = e.data;
+    if (msg.type === 'msg') {
+      if (activeChatId && msg.chatKey === chatKey(session().id, activeChatId)) {
+        renderMessages();
+      }
+      if (currentTab === 'chats') renderSidebar();
+    } else if (msg.type === 'friend-change') {
+      if (currentTab === 'friends') renderSidebar();
+    }
+  };
+}
+
+function startBroadcastForRoom(roomId) {
+  if (bc) bc.close();
+  bc = new BroadcastChannel('room-' + roomId);
+  bc.onmessage = handleRoomSignal;
+  const me = session();
+  bc.postMessage({ type: 'join', from: me.id, username: me.username });
+}
+
+/* ============================================================
+   WEBRTC
+   ============================================================ */
+let localStream = null;
+let peers = {};
+
+async function startLocalMedia() {
+  const btn = $('roomStartBtn');
+  btn.disabled = true;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (e) {
+    alert('تعذّر الوصول للكاميرا/المايك: ' + e.message);
+    btn.disabled = false;
+    return;
+  }
+  makeTile('local', 'أنت').srcObject = localStream;
+  localStream.getTracks().forEach(t => { /* prepare tracks */ });
+  // Announce so others initiate
+  const me = session();
+  bc.postMessage({ type: 'ready', from: me.id, username: me.username });
+}
+
+function makeTile(id, label) {
+  let existing = document.getElementById('tile-' + id);
+  if (existing) return existing.querySelector('video');
+  const wrap = document.createElement('div');
+  wrap.className = 'tile';
+  wrap.id = 'tile-' + id;
+  wrap.innerHTML = `<video id="${id}" autoplay playsinline muted="${id === 'local'}"></video>
+                    <span class="cap">${esc(label)}</span>`;
+  $('videos').appendChild(wrap);
+  return wrap.querySelector('video');
+}
+
+function createPeer(peerId, username, initiator) {
+  if (peers[peerId]) return peers[peerId];
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+  peers[peerId] = pc;
+
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  pc.onicecandidate = e => {
+    if (e.candidate) bc.postMessage({ type: 'ice', from: session().id, to: peerId, candidate: e.candidate });
+  };
+
+  pc.ontrack = e => {
+    makeTile('peer-' + peerId, username || 'مستخدم').srcObject = e.streams[0];
+  };
+
+  if (initiator) {
+    pc.onnegotiationneeded = async () => {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      bc.postMessage({ type: 'offer', from: session().id, to: peerId, sdp: offer, username: session().username });
+    };
+  }
+
+  return pc;
+}
+
+async function handleRoomSignal(e) {
+  const msg = e.data;
+  const me = session();
+  if (msg.from === me.id) return;
+  if (msg.to && msg.to !== me.id) return;
+
+  try {
+    if (msg.type === 'join') {
+      // we might be already ready; ask them to initiate? Simplest: if we have stream, we initiate
+      if (localStream) {
+        createPeer(msg.from, msg.username, true);
+      }
+    } else if (msg.type === 'ready') {
+      // they have media, we have media → both sides: the one with smaller id initiates to avoid double
+      if (localStream && me.id < msg.from) {
+        createPeer(msg.from, msg.username, true);
+      }
+    } else if (msg.type === 'offer') {
+      const pc = createPeer(msg.from, msg.username, false);
+      await pc.setRemoteDescription(msg.sdp);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      bc.postMessage({ type: 'answer', from: me.id, to: msg.from, sdp: answer });
+    } else if (msg.type === 'answer') {
+      const pc = peers[msg.from];
+      if (pc) await pc.setRemoteDescription(msg.sdp);
+    } else if (msg.type === 'ice') {
+      const pc = peers[msg.from];
+      if (pc) await pc.addIceCandidate(msg.candidate).catch(() => {});
+    } else if (msg.type === 'leave') {
+      if (peers[msg.from]) { peers[msg.from].close(); delete peers[msg.from]; }
+      const tile = document.getElementById('tile-peer-' + msg.from);
+      if (tile) tile.remove();
+    }
+  } catch (err) {
+    console.warn('signal err', err);
+  }
+}
+
+function leaveRoom() {
+  if (bc) {
+    bc.postMessage({ type: 'leave', from: session().id });
+    bc.close();
+  }
+  Object.values(peers).forEach(pc => pc.close());
+  peers = {};
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  localStream = null;
+  currentRoomId = null;
+
+  $('roomScreen').classList.remove('active');
+  $('appScreen').classList.add('active');
+  switchTab('rooms');
+  setupBroadcast();
+}
+
+/* ============================================================
+   CALLS FROM CHAT
+   ============================================================ */
+function startCallWithCurrent() {
+  if (!activeChatId) return;
+  const me = session();
+  const r = rooms().find(x =>
+    x.hostId === me.id &&
+    x.members?.includes(activeChatId)
+  );
+  if (r) {
+    openRoom(r.id);
+    return;
+  }
+  // No shared room — create one on the fly and tell the other side
+  const id = uid();
+  const token = uid() + uid();
+  const all = rooms();
+  all.push({ id, hostId: me.id, name: 'مكالمة', inviteToken: token, members: [me.id, activeChatId], at: Date.now() });
+  saveRooms(all);
+  openRoom(id);
+}
+
+/* ============================================================
+   HASH ROUTER — handle room links
+   ============================================================ */
+function handleHash() {
+  const hash = location.hash.slice(1);
+  if (hash.startsWith('room=')) {
+    const [idPart, tokenPart] = hash.slice(5).split('&t=');
+    if (session()) {
+      openRoom(idPart, tokenPart);
+    } else {
+      // save intent for after login
+      sessionStorage.setItem('pendingRoom', JSON.stringify({ id: idPart, token: tokenPart }));
+    }
+  }
+}
+window.addEventListener('hashchange', handleHash);
+window.addEventListener('load', () => {
+  if (session()) enterApp();
+  handleHash();
+  const pending = sessionStorage.getItem('pendingRoom');
+  if (pending && session()) {
+    const { id, token } = JSON.parse(pending);
+    sessionStorage.removeItem('pendingRoom');
+    openRoom(id, token);
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (bc && currentRoomId) bc.postMessage({ type: 'leave', from: session()?.id });
+});
+</script>
+</body>
+</html>
